@@ -1,4 +1,9 @@
-import React, { useCallback, useLayoutEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { View, Image, TouchableOpacity, Text } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -47,8 +52,6 @@ const Messaging = ({ route, navigation }) => {
     },
   ]);
 
-  const [message, setMessage] = useState("");
-
   const [user, setUser] = useState({
     _id: uuidv4(),
     name: "a",
@@ -94,20 +97,10 @@ const Messaging = ({ route, navigation }) => {
         ? `0${new Date().getMinutes()}`
         : `${new Date().getMinutes()}`;
 
-    console.log({
-      message,
-
-      user,
-
-      timestamp: { hour, mins },
-    });
-
     setChatMessages((e) => [
       ...e,
       {
         _id: uuidv4(),
-
-        text: message,
 
         createdAt: `${hour} : ${mins}`,
 
@@ -127,31 +120,28 @@ const Messaging = ({ route, navigation }) => {
   const [isAttachFile, setIsAttachFile] = useState(false);
   const [imagePath, setImagePath] = useState({ file: "" });
   const [filePath, setFilePath] = useState("");
+  const [text, setText] = useState("");
+
   const onSend = useCallback(
     (messages = []) => {
-      console.log(
-        "aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA***************************************"
-      );
       const [messageToSend] = messages;
-      console.log("messageToSend******************************", messageToSend);
+      setText(messageToSend.text);
+      console.log("messageToSend", messageToSend);
+
       if (isAttachImage) {
-        console.log(
-          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB***************************************"
-        );
         const newMessage = {
           _id: uuidv4(),
           createdAt: new Date(),
-          text: messageToSend.text,
+          text: text,
           user: {
             _id: user._id,
             name: user.name,
           },
-          image: imagePath,
+          image: imagePath.file,
           file: {
             url: "",
           },
         };
-        console.log("newMessage", newMessage);
         setChatMessages((previousMessages) =>
           GiftedChat.append(previousMessages, newMessage)
         );
@@ -161,7 +151,7 @@ const Messaging = ({ route, navigation }) => {
         const newMessage = {
           _id: uuidv4(),
           createdAt: new Date(),
-          text: messageToSend.text,
+          text: text,
           user: {
             _id: user._id,
             name: user.name,
@@ -181,12 +171,15 @@ const Messaging = ({ route, navigation }) => {
           GiftedChat.append(previousMessages, messages)
         );
       }
+      setText("");
     },
     [filePath, imagePath, isAttachFile, isAttachImage]
   );
 
   // add a function attach file using DocumentPicker.pick
-
+  onInputTextChanged = (e) => {
+    setText(e);
+  };
   const pickImage = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -195,20 +188,17 @@ const Messaging = ({ route, navigation }) => {
         aspect: [4, 3],
         quality: 1,
       });
-      console.log("result[0]", result);
+      console.log("result[0]", result.assets[0].uri);
       const fileUri = result.assets[0].uri;
       if (!fileUri) {
         console.log("File URI is undefined or null");
         return;
       }
-      console.log("fileUri", fileUri);
-      console.log("imagePath01", imagePath);
 
       if (fileUri.indexOf(".png") !== -1 || fileUri.indexOf(".jpg") !== -1) {
         setImagePath({ file: fileUri });
         setIsAttachImage(true);
-        console.log("imagePath02", imagePath);
-        console.log("AttachImage", isAttachImage);
+        setText("   ");
       }
     } catch (err) {
       if (!err) {
@@ -219,7 +209,6 @@ const Messaging = ({ route, navigation }) => {
       }
     }
   };
-
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({});
@@ -234,6 +223,7 @@ const Messaging = ({ route, navigation }) => {
       setFilePath(fileUri);
       console.log("filePath", filePath);
       setIsAttachFile(true);
+      setText("   ");
     } catch (err) {
       if (err) {
         console.log("User cancelled file picker");
@@ -288,11 +278,13 @@ const Messaging = ({ route, navigation }) => {
       </Send>
     );
   };
+
   const [fileVisible, setFileVisible] = useState(false);
 
   // Modify renderBuble()
   const renderBubble = (props) => {
     const { currentMessage } = props;
+    console.log("currentMessage", currentMessage);
     if (currentMessage.file && currentMessage.file.url) {
       return (
         <TouchableOpacity
@@ -359,7 +351,10 @@ const Messaging = ({ route, navigation }) => {
           />
           <View style={styles.chatRightFooter}>
             <TouchableOpacity
-              onPress={() => setImagePath({ file: "" })}
+              onPress={() => {
+                setIsAttachImage(false);
+                setImagePath({ file: "" });
+              }}
               style={styles.buttonFooterChat}
             >
               <Image
@@ -379,7 +374,10 @@ const Messaging = ({ route, navigation }) => {
           </View>
           <View style={styles.chatRightFooter}>
             <TouchableOpacity
-              onPress={() => setFilePath("")}
+              onPress={() => {
+                setIsAttachFile(false);
+                setFilePath("");
+              }}
               style={styles.buttonFooterChat}
             >
               <Image
@@ -398,12 +396,23 @@ const Messaging = ({ route, navigation }) => {
     <GiftedChat
       messages={chatMessages}
       isTyping={true}
+      text={text}
       showAvatarForEveryMessage={true}
       renderSend={renderSend}
       renderBubble={renderBubble}
+      onInputTextChanged={onInputTextChanged}
       alwaysShowSend
       renderChatFooter={renderChatFooter}
-      onSend={onSend}
+      onSend={(m) => {
+        console.log("m", m);
+        if (isAttachImage || isAttachFile) {
+          onSend(m);
+        } else if (m[0].text == "") {
+          return;
+        } else {
+          onSend(m);
+        }
+      }}
       scrollToBottomComponent={scrollToBottomComponent}
       user={{
         _id: uuidv4(),

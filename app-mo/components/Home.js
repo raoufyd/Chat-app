@@ -51,7 +51,9 @@ const Home = ({ navigation }) => {
             autoCorrect={false}
             placeholder="Enter your username"
             style={styles.logininput}
-            onChangeText={(value) => setUsername(value)}
+            onChangeText={(value) => {
+              setUsername(value.trim());
+            }}
           />
         </View>
 

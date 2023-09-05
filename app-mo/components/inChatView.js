@@ -15,16 +15,16 @@ function InChatView({ props, visible, onClose }) {
       visible={visible}
       onRequestClose={onClose}
       animationType="slide"
-      style={{ height: 600 }}
+      style={{ height: 100 }}
     >
       <View style={{ padding: 20 }}>
         <PDFReader
           source={{ uri: currentMessage.file.url }}
-          style={{ height: "100%", width: "100%" }}
+          style={{ height: 10, width: 10 }}
         />
         <TouchableOpacity onPress={onClose} style={styles.buttonCancel}>
           <Image
-            style={styles.buttonFooterChat}
+            style={styles.buttonFooterInChatView}
             source={require("app-mo/assets/cancel.png")}
           />
         </TouchableOpacity>

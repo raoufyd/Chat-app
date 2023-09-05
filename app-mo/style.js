@@ -323,6 +323,10 @@ export const styles = StyleSheet.create({
     height: 20,
     width: 20,
   },
+  buttonFooterInChatView: {
+    height: 20,
+    width: 20,
+  },
   chatImageFooter: {
     flexDirection: "row",
     height: 90,
